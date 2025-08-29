@@ -14,8 +14,8 @@ const PORT = process.env.PORT
 const io = new socketio.Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production'
-            ? false
-            : "http://localhost:5173",
+            ? process.env.ALLOWED_ORIGINS?.split(',') || "https://yourdomain.com"
+            : ["http://localhost:5173", "http://localhost:5174"],
         methods: ["GET", "POST"]
     }
 });
