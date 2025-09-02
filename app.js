@@ -66,16 +66,24 @@ io.on('connection',(socket)=>{
 
         if (!gameState.isGameActive) {
             gameState.isGameActive = true;
-            gameState.playerId = Math.floor(Math.random() * 100) + 1;
+            // gameState.playerId = Math.floor(Math.random() * 100) + 1;
         }
         gameState.players = Array.from(connectedPlayers.values());
+
+        const isGameMaster = gameState.gameMaster.id ===  socket.id
 
 
         socket.emit('player-joined', {
             playerId: socket.id,
             playerName: playerName,
-            isGameMaster: !!gameState.gameMaster,
+            isGameMaster: isGameMaster,
             players:gameState.players,
+            gameMaster: gameState.gameMaster,
+            gameActive: gameState.isGameActive
+        });
+
+        io.emit('game-state-updated', {
+            players: gameState.players,
             gameMaster: gameState.gameMaster,
             gameActive: gameState.isGameActive
         });
