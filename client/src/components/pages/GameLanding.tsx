@@ -1,105 +1,93 @@
 import GameLayout from "@/GameLayout.tsx";
-import {useEffect, useState} from "react";
-import io from 'socket.io-client';
-import GameSession from "@/components/pages/GameSession.tsx";
+import {useState} from "react";
+import io from "socket.io-client";
+import {useNavigate} from "react-router-dom";
 
-// Create socket connection
-const socket = io('http://localhost:8001');
-export type gameDataType={
-    gameActive:boolean
-    gameMaster:gameMasterType
-    isGameMaster: boolean
+
+export type playerType={
+    guesses: number
+    id:string
+    name: string
+}
+// const playerInit:playerType={
+//     guesses:0,
+//     id:"",
+//     name:""
+// }
+export type gameMasterType = {
+    name:string,
     playerId: string
-    playerName: string
-    players:[];
-}
-
-interface gameMasterType{
-    guesses:number,
-    id:string,
-    name:string
-}
-
-const gameMasterInit:gameMasterType={
-    guesses:0,
-    id:"",
-    name:""
 }
 
 
-const gameDataInit:gameDataType={
-    playerId: "",
-    playerName: "",
-    isGameMaster: false,
-    players:[],
-    gameMaster: gameMasterInit,
-    gameActive:false,
-
-}
-
+// interface gameMasterType{
+//     guesses:number,
+//     id:string,
+//     name:string
+// }
+//
+export const socket = io("http://localhost:8002", {
+    withCredentials: true,
+    transports: ["websocket"],
+});
 export default function GameLanding(){
+
+    // socket.on("setCookie", (playerId) => {
+    //     document.cookie = `playerId=${playerId}; path=/`;
+    // });
+    const navigate = useNavigate()
+
+    // const socket = io('http://localhost:8001')
+
+    socket.on('connect_error', (error) => {
+        console.log('Connection error:', error);
+    });
+
+    // Use socket connection
+    // const socket = useSocket();
     const [playerName, setPlayerName] = useState('');
-    const [hasJoined, setHasJoined] = useState(false);
-    const [gameData, setGameData] = useState<gameDataType>(gameDataInit);
 
 
 
 
 
 
-    const handleStartGame = () => {
+    const handlePlayGame = () => {
         if (playerName.trim()) {
-            socket.emit('join-game', {playerName});
-        }
-        setHasJoined(true);
+            socket.emit('play-game', {playerName});
 
-    };
-
-    const handleJoinGame = () => {
-        if (playerName.trim()) {
-            socket.emit('game-state-updated', {playerName});
-        }
-        setHasJoined(true);
-    };
-
-    // const isGameMaster = gameData.gameMaster?.id === gameData.playerId
-
-    useEffect(() => {
-        if (gameData && Object.keys(gameData).length > 0) {
-            // Now you can safely use gameData here
-            console.log("Game data updated:", gameData)
-
-
-            // Call other functions that need gameData
-            // updateUI(gameData)
-            // processGameState(gameData)
-            // etc.
-        }
-
-    }, [gameData])
-
-    useEffect(() => {
-        socket.on('player-joined', (data)=>{
-            setGameData(data)
-        })
-        socket.on('game-state-updated', (data) => {
-            // Handle the update
-            setGameData(prevData => ({
-                ...prevData,
-                players: data.players,
-                gameMaster: data.gameMaster,
-                gameActive: data.gameActive
-                // Keep your own playerName and playerId intact
-            }));
-        });
-
-        return () => {
-            socket.off('player-joined', (data)=>{
-                setHasJoined(true);
-                setGameData(data)
+            socket.onAny((eventName, ...args) => {
+                console.log(`Received event: ${eventName}`, args);
             });
-        };
-    }, []);
+
+            // socket.once('game-state-updated', (data) => {
+            //     console.log("Got game state:", data);
+            //     navigate('/game', {state:{userName:playerName,gameData:data}} )
+            //
+            // });
+            socket.once('your-game-state', (data) => {
+                console.log("Got game state:", data);
+                navigate('/game', {state:{userName:playerName,gameData:data}} )
+
+            });
+
+            // socket.once('game-state-updated', (data) => {
+            //     console.log("Got initial game state:", data);
+            //     navigate('/game', {
+            //         state: {
+            //             userName: playerName,
+            //             initialGameData: data
+            //         }
+            //     });
+            // });
+
+        }
+        // navigate('/game', {state:{userName:playerName}} )
+    };
+
+
+
+
 
 
 
@@ -110,20 +98,20 @@ export default function GameLanding(){
     return(
         <>
 
-            {gameData?.gameActive && hasJoined?
-                <GameSession gameData={gameData} isGameMaster={gameData.isGameMaster}/>:
                 <GameLayout>
                     <div className={"rounded-md w-full p-8 flex justify-center items-center gap-4 flex-col"}>
                         <div className={"bg-amber-100 p-8 flex  w-full justify-center items-center   rounded-md"}>
                             <input value={playerName} type={"text"} onChange={event => setPlayerName(event.target.value)} className={"bg-amber-400 p-8 text-center text-xl rounded-md"} placeholder={"Enter your name"}/>
                         </div>
-                        {gameData?.gameActive?
-                            <button onClick={()=>handleJoinGame()}  className={"bg-amber-400 p-2 active:scale-105 transition-transform rounded-md cursor-pointer border-2"}>Join game</button>: <button onClick={()=>handleStartGame()} className={"bg-amber-400 p-2 active:scale-105 cursor-pointer transition-transform rounded-md border-2"}>Click to start</button>
-                        }
+                        {/*{gameData?.gameActive?*/}
+                        {/*    <button onClick={()=>handleJoinGame()}  className={"bg-amber-400 p-2 active:scale-105 transition-transform rounded-md cursor-pointer border-2"}>Join game</button>: <button onClick={()=>handleStartGame()} className={"bg-amber-400 p-2 active:scale-105 cursor-pointer transition-transform rounded-md border-2"}>Click to start</button>*/}
+                        {/*}*/}
+                        <button onClick={()=>handlePlayGame()}  className={"bg-amber-400 p-2 active:scale-105 transition-transform rounded-md cursor-pointer border-2"}>Play game</button>
+
                     </div>
                 </GameLayout>
 
-            }
+
 
 
 

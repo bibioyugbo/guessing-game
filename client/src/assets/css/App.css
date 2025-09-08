@@ -23,3 +23,10 @@ html, body{
   margin: 0!important;
   font-family: "Roboto", arial, sans-serif;
 }
+
+.li-element {
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+}
