@@ -30,7 +30,7 @@ let gameMaster = {
     playerId:"",
     masterId: ""
 };
-const players = [];
+const players = {};
 
 const connectedPlayers = new Map();
 function pickRandomGameMaster() {
@@ -74,6 +74,8 @@ io.on('connection',(socket)=>{
         const { playerName } = data;
         console.log(`🎮 ${playerName} joined with ID: ${playerId}`);
 
+        socket.playerId = playerId;
+
         if (!gameMaster.playerId) {
             gameMaster = {name:playerName,playerId, masterId:playerId};
             // socket.emit("youAreMaster", gameMaster );
@@ -86,14 +88,22 @@ io.on('connection',(socket)=>{
         //         name: playerName,
         //     });
         // }
-        if (!isGameMaster){
-            const newPlayer = {
-                id :playerId,
+        // if (!isGameMaster){
+        //     players.newPlayer = {
+        //         id: playerId,
+        //         name: playerName,
+        //         guessCount: 0,
+        //         guess: ""
+        //     }
+        //     // players.push(newPlayer)
+        // }
+        if (!isGameMaster) {
+            players[playerId] = { // ✅ Use unique playerId as key
+                id: playerId,
                 name: playerName,
-                guesses: 0,
-
-            }
-            players.push(newPlayer)
+                guessCount: 0,
+                guess: ""
+            };
         }
 
         // Send the same game state to everyone
@@ -176,21 +186,41 @@ io.on('connection',(socket)=>{
     socket.on("round-ended", pickRandomGameMaster)
 
 
-    socket.on('join-game', (data)=>{
-        const { playerName } = data;
-        connectedPlayers.set(socket.id, {
-            id: socket.id,
-            name: playerName,
-            guesses: 0
-        });
-        gameState.players = Array.from(connectedPlayers.values());
-
-    })
+    // socket.on('join-game', (data)=>{
+    //     const { playerName } = data;
+    //     connectedPlayers.set(socket.id, {
+    //         id: socket.id,
+    //         name: playerName,
+    //         guesses: 0
+    //     });
+    //     gameState.players = Array.from(connectedPlayers.values());
+    //
+    // })
 
     socket.on('question-set', (data)=>{
         console.log(data)
         socket.broadcast.emit('question-set', data)
     })
+
+    // socket.on('player-answer', (data)=>{
+    //     console.log("Guesses made,",data)
+    //
+    //     players.newPlayer.guess = data
+    //     io.emit("guesses-made", players)
+    // })
+    socket.on('player-answer', (data) => {
+        console.log("Guesses made,", data);
+        const currentPlayerId = socket.playerId; // ✅ Get from socket
+
+        if (players[currentPlayerId]) {
+            players[currentPlayerId].guess = data;
+            players[currentPlayerId].guessCount += 1;
+
+            console.log(`Player ${players[currentPlayerId].name} guessed: ${data}`);
+        }
+
+        io.emit("guesses-made", players);
+    });
 })
 
 // app.get("/", (_req,res)=>{
@@ -199,14 +229,19 @@ io.on('connection',(socket)=>{
 
 app.use(express.static(path.join(__dirname, 'client/dist'))); // or 'client/build'
 
-app.get('/', (req, res) => {
-    // res.sendFile(path.join(__dirname, 'client/dist', 'index.html')); // or 'build'
-    // console.log("hey bibs")
-    res.json({
-        status: "OK",
-        message: "Guessing Game API is running!",
-        connectedPlayers: connectedPlayers.size
-    });
+// app.get('/', (req, res) => {
+//     // res.sendFile(path.join(__dirname, 'client/dist', 'index.html')); // or 'build'
+//     // console.log("hey bibs")
+//     res.json({
+//         status: "OK",
+//         message: "Guessing Game API is running!",
+//         connectedPlayers: connectedPlayers.size
+//     });
+// });
+
+app.use(express.static(path.join(__dirname, "client/dist")));
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "client/dist", "index.html"));
 });
 
 

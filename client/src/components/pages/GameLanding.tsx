@@ -2,6 +2,7 @@ import GameLayout from "@/GameLayout.tsx";
 import {useState} from "react";
 import io from "socket.io-client";
 import {useNavigate} from "react-router-dom";
+import SOCKET_URL from "../../../apiConfig.ts";
 
 
 export type playerType={
@@ -26,10 +27,12 @@ export type gameMasterType = {
 //     name:string
 // }
 //
-export const socket = io("http://localhost:8002", {
-    withCredentials: true,
-    transports: ["websocket"],
-});
+// export const socket = io("http://localhost:8002", {
+//     withCredentials: true,
+//     transports: ["websocket"],
+// });
+export const socket = io(SOCKET_URL);
+
 export default function GameLanding(){
 
     // socket.on("setCookie", (playerId) => {
