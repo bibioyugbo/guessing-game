@@ -19,7 +19,7 @@ const PORT = process.env.PORT
 const io = new socketio.Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production'
-            ? process.env.ALLOWED_ORIGINS?.split(',') || "https://yourdomain.com"
+            ? process.env.ALLOWED_ORIGINS?.split(',') || "https://guessing-game-nhdp.onrender.com"
             : ["http://localhost:5173", "http://localhost:5174"],
         methods: ["GET", "POST"],  credentials: true
     }
